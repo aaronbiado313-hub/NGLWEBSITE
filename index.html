@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NGL · anonymous messages</title>
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    body {
+        min-height: 100vh;
+        background: linear-gradient(145deg, #0b0e18 0%, #1a1f2f 100%);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 16px;
+    }
+    .glow {
+        position: fixed; width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(236,28,132,.2) 0%, transparent 70%);
+        border-radius: 50%; pointer-events: none; z-index: 0; top: -100px; right: -100px; filter: blur(60px);
+    }
+    .glow-bottom { top:auto; bottom:-150px; left:-100px; right:auto; width:500px; height:500px; background: radial-gradient(circle, rgba(252,100,60,.15) 0%, transparent 70%); }
+    .ngl-card {
+        max-width: 600px; width: 100%;
+        background: rgba(18,22,35,.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,.08); border-radius: 48px;
+        padding: 28px 22px 32px;
+        box-shadow: 0 30px 50px -20px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.02) inset;
+        position: relative; z-index: 2;
+    }
+    .logo-area { text-align: center; margin-bottom: 22px; }
+    .logo {
+        display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+        background: linear-gradient(135deg, #EC1C84, #FC643C);
+        padding: 10px 28px; border-radius: 100px;
+        box-shadow: 0 8px 24px -8px #EC1C84;
+    }
+    .logo span { font-size: 2rem; font-weight: 800; letter-spacing: -1px; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,.2); }
+    .logo .dot { font-size: 2.6rem; line-height: .8; color: #fff; }
+    .tagline { color: #9aa4bf; text-align: center; font-size: .8rem; letter-spacing: .3px; margin-top: 10px; text-transform: uppercase; opacity: .8; }
+    .profile-section {
+        display: flex; align-items: center; gap: 14px;
+        background: linear-gradient(135deg, rgba(236,28,132,.12), rgba(252,100,60,.08));
+        border-radius: 100px; padding: 10px 18px 10px 12px;
+        border: 1px solid rgba(236,28,132,.3); margin-bottom: 20px;
+    }
+    .avatar {
+        width: 48px; height: 48px; border-radius: 50%;
+        background: linear-gradient(135deg, #EC1C84, #FC643C);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; font-weight: 600; color: #fff; flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(236,28,132,.5); text-transform: uppercase;
+    }
+    .profile-info { flex: 1; min-width: 0; }
+    .profile-name { color: #fff; font-weight: 600; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .profile-link { display: flex; align-items: center; gap: 6px; color: #7b86a8; font-size: .7rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .profile-link a { color: #FC643C; text-decoration: none; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+    .profile-link a:hover { text-decoration: underline; }
+    .copy-btn {
+        background: #FC643C; border: none; color: #fff;
+        padding: 8px 16px; border-radius: 100px;
+        font-size: .75rem; font-weight: 700; cursor: pointer;
+        display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+        box-shadow: 0 4px 10px -2px #FC643C80; transition: .15s;
+    }
+    .copy-btn:hover { background: #ff7a55; transform: scale(1.02); }
+    .copy-btn:active { transform: scale(.96); }
+    .setup-panel { background: rgba(0,0,0,.3); border-radius: 28px; padding: 22px; border: 1px solid #2b3149; margin-bottom: 24px; }
+    .setup-panel h3 { color: #fff; font-size: 1.1rem; margin-bottom: 16px; font-weight: 600; }
+    .setup-panel input, .input-wrapper input {
+        width: 100%; background: #0f121d; border: 1px solid #2b3149; border-radius: 100px;
+        padding: 14px 20px; color: #fff; font-size: 1rem; outline: none; transition: .2s;
+    }
+    .setup-panel input { margin-bottom: 12px; }
+    .setup-panel input:focus { border-color: #FC643C; box-shadow: 0 0 0 3px rgba(252,100,60,.2); }
+    .setup-panel input::placeholder, .input-wrapper input::placeholder { color: #5a6382; }
+    .btn-primary {
+        background: linear-gradient(135deg, #EC1C84, #FC643C); border: none; color: #fff;
+        padding: 14px 24px; border-radius: 100px; font-size: .95rem; font-weight: 700;
+        cursor: pointer; width: 100%; transition: .15s;
+        box-shadow: 0 6px 14px -4px #EC1C84b0;
+    }
+    .btn-primary:hover { filter: brightness(1.1); transform: scale(1.01); }
+    .btn-primary:active { transform: scale(.98); }
+    .tabs { display: flex; gap: 8px; margin-bottom: 18px; background: rgba(0,0,0,.2); border-radius: 100px; padding: 4px; border: 1px solid #2b3149; }
+    .tab {
+        flex: 1; padding: 10px 14px; border-radius: 100px; background: transparent; border: none;
+        color: #7b86a8; font-size: .85rem; font-weight: 600; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 6px; transition: .15s;
+    }
+    .tab.active { background: #1b1f2e; color: #fff; box-shadow: 0 4px 12px -4px #00000080; }
+    .tab:hover:not(.active) { color: #b7c2e6; }
+    .tab .badge-count { background: #2c3450; padding: 2px 8px; border-radius: 30px; font-size: .7rem; font-weight: 600; color: #b7c2e6; }
+    .tab.active .badge-count { background: #FC643C; color: #fff; }
+    .message-list {
+        background: rgba(0,0,0,.25); border-radius: 28px; padding: 10px 6px 10px 10px;
+        max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+        border: 1px solid rgba(255,255,255,.03); margin-bottom: 12px;
+        scrollbar-width: thin; scrollbar-color: #3a4260 #131725;
+    }
+    .message-list::-webkit-scrollbar { width: 5px; }
+    .message-list::-webkit-scrollbar-thumb { background: #3a4260; border-radius: 20px; }
+    .message-item {
+        background: #1b1f2e; border-radius: 22px; padding: 14px 18px;
+        border-left: 3px solid #EC1C84; box-shadow: 0 6px 12px -6px rgba(0,0,0,.6);
+        display: flex; flex-direction: column; gap: 6px; animation: fadeSlide .2s ease;
+    }
+    .message-item.sent { border-left-color: #FC643C; }
+    @keyframes fadeSlide { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .message-text { color: #eef2ff; font-size: .95rem; line-height: 1.5; word-break: break-word; }
+    .message-meta { display: flex; align-items: center; justify-content: space-between; color: #7b86a8; font-size: .65rem; letter-spacing: .2px; text-transform: uppercase; font-weight: 500; }
+    .message-meta .badge { background: rgba(236,28,132,.15); padding: 3px 10px; border-radius: 30px; color: #ff8ac4; font-weight: 600; font-size: .6rem; border: 1px solid rgba(236,28,132,.3); }
+    .message-meta .badge.sent-badge { background: rgba(252,100,60,.15); color: #ffb08a; border-color: rgba(252,100,60,.3); }
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 36px 16px; color: #5c6688; text-align: center; gap: 10px; }
+    .empty-state .emoji { font-size: 2.4rem; opacity: .7; }
+    .empty-state p { font-size: .9rem; line-height: 1.5; max-width: 260px; }
+    .input-area { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
+    .input-wrapper {
+        display: flex; align-items: center; background: #0f121d; border-radius: 100px;
+        padding: 6px 6px 6px 22px; border: 1px solid #2b3149;
+        transition: .2s; box-shadow: 0 8px 18px -10px #00000080;
+    }
+    .input-wrapper:focus-within { border-color: #FC643C; box-shadow: 0 0 0 3px rgba(252,100,60,.15); }
+    .input-wrapper input { background: transparent; border: none; padding: 14px 0; font-size: 1rem; flex: 1; min-width: 0; }
+    .input-wrapper button {
+        background: linear-gradient(135deg, #EC1C84, #FC643C); border: none; border-radius: 100px;
+        width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; color: #fff; flex-shrink: 0;
+        box-shadow: 0 6px 14px -4px #EC1C84b0; transition: .15s;
+    }
+    .input-wrapper button:hover { filter: brightness(1.1); transform: scale(1.02); }
+    .input-wrapper button:active { transform: scale(.96); }
+    .disclaimer { display: flex; align-items: center; justify-content: center; gap: 8px; color: #5e6783; font-size: .7rem; text-align: center; letter-spacing: .2px; }
+    .disclaimer svg { width: 14px; height: 14px; fill: none; stroke: #5e6783; stroke-width: 1.6; flex-shrink: 0; }
+    .footer-note { margin-top: 20px; text-align: center; color: #343c57; font-size: .7rem; letter-spacing: .5px; text-transform: uppercase; position: relative; z-index: 2; }
+    .footer-note strong { color: #FC643C; font-weight: 700; }
+    .toast {
+        position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+        background: #1b1f2e; color: #fff; padding: 14px 28px; border-radius: 100px;
+        font-size: .9rem; font-weight: 500; border: 1px solid #FC643C;
+        box-shadow: 0 20px 40px -10px #000000b0; opacity: 0; transition: .3s ease;
+        z-index: 1000; pointer-events: none; backdrop-filter: blur(12px);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .hidden { display: none !important; }
+    .send-header { text-align: center; margin-bottom: 22px; }
+    .send-avatar {
+        width: 72px; height: 72px; border-radius: 50%;
+        background: linear-gradient(135deg, #EC1C84, #FC643C);
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 12px;
+        box-shadow: 0 8px 20px -8px #EC1C84; text-transform: uppercase;
+    }
+    .send-header h2 { color: #fff; font-size: 1.15rem; font-weight: 600; margin-bottom: 4px; line-height: 1.4; }
+    .send-header h2 span { color: #FC643C; }
+    .send-sub { color: #7b86a8; font-size: .8rem; }
+    .share-hint {
+        text-align: center; color: #5e6783; font-size: .78rem;
+        padding: 12px 16px; background: rgba(0,0,0,.2);
+        border-radius: 20px; border: 1px dashed #2b3149; margin-top: 4px;
+    }
+    .share-hint strong { color: #FC643C; }
+    @media (max-width: 500px) {
+        .ngl-card { padding: 20px 14px 24px; border-radius: 36px; }
+        .logo span { font-size: 1.6rem; }
+        .logo .dot { font-size: 2.2rem; }
+        .message-list { max-height: 300px; }
+        .profile-section { padding: 8px 12px 8px 10px; }
+        .avatar { width: 40px; height: 40px; font-size: 1.2rem; }
+    }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="glow glow-bottom"></div>
+
+<div class="ngl-card">
+    <div class="logo-area">
+        <div class="logo"><span>NGL</span><span class="dot">•</span></div>
+        <div class="tagline">anonymous messages · no identity</div>
+    </div>
+
+    <!-- SETUP -->
+    <div id="screenSetup" class="screen">
+        <div class="setup-panel">
+            <h3>✨ Create your NGL profile</h3>
+            <input type="text" id="setupName" placeholder="Your display name" maxlength="30" autocomplete="off">
+            <input type="text" id="setupUsername" placeholder="Username (a-z, 0-9, _)" maxlength="20" autocomplete="off">
+            <button class="btn-primary" id="createProfileBtn">Create profile</button>
+            <p style="color:#5e6783; font-size:.7rem; margin-top:12px; text-align:center;">
+                Your link: <span style="color:#FC643C; font-weight:600;">this-site.vercel.app/?to=your-username</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- MAIN -->
+    <div id="screenMain" class="screen hidden">
+        <div class="profile-section">
+            <div class="avatar" id="avatarInitial">?</div>
+            <div class="profile-info">
+                <div class="profile-name" id="displayName">User</div>
+                <div class="profile-link">
+                    <span>🔗</span>
+                    <a href="#" id="profileLink" target="_blank">...</a>
+                </div>
+            </div>
+            <button class="copy-btn" id="copyLinkBtn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy
+            </button>
+        </div>
+        <div class="tabs">
+            <button class="tab active" id="tabInbox">Inbox <span class="badge-count" id="inboxCount">0</span></button>
+            <button class="tab" id="tabSent">Sent <span class="badge-count" id="sentCount">0</span></button>
+        </div>
+        <div class="message-list" id="messageList"></div>
+        <div class="share-hint">💡 Share your link — or open it in a new tab to test sending yourself a message.</div>
+    </div>
+
+    <!-- SEND (via ?to=) -->
+    <div id="screenSend" class="screen hidden">
+        <div class="send-header">
+            <div class="send-avatar" id="sendAvatar">?</div>
+            <h2>Send anonymous message to <span id="sendName">...</span></h2>
+            <p class="send-sub">They'll never know it was you</p>
+        </div>
+        <div class="input-area">
+            <div class="input-wrapper">
+                <input type="text" id="sendInput" placeholder="Type your message..." maxlength="300" autocomplete="off">
+                <button id="sendToBtn" aria-label="send">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+            </div>
+            <div class="disclaimer">
+                <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" fill="none" stroke-width="1.5"/></svg>
+                <span>completely anonymous · sender is never revealed</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ERROR -->
+    <div id="screenError" class="screen hidden">
+        <div class="empty-state">
+            <div class="emoji">🔍</div>
+            <p id="errorText">User not found</p>
+            <a href="./" class="btn-primary" style="text-decoration:none; display:inline-block; margin-top:16px; width:auto; padding:12px 32px;">Go home</a>
+        </div>
+    </div>
+</div>
+
+<div class="footer-note"><strong>NGL</strong> — you can't see who sent it</div>
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+(function () {
+    const DB_KEY = 'ngl_db_v1';
+    let db = loadDB();
+    let currentTab = 'inbox';
+    let toastTimeout;
+
+    function loadDB() {
+        try {
+            const raw = localStorage.getItem(DB_KEY);
+            if (raw) {
+                const d = JSON.parse(raw);
+                if (!d.users) d.users = {};
+                return d;
+            }
+        } catch (e) {}
+        return { users: {}, currentUser: null };
+    }
+    function saveDB() {
+        try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch (e) {}
+    }
+    function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 9); }
+    function getUser(u) { return db.users[u] || null; }
+    function getCurrent() { return db.currentUser ? getUser(db.currentUser) : null; }
+    function getLink(username) {
+        const base = window.location.origin + window.location.pathname;
+        return base + '?to=' + encodeURIComponent(username);
+    }
+
+    // DOM
+    const $ = id => document.getElementById(id);
+    const screenSetup = $('screenSetup'), screenMain = $('screenMain'),
+          screenSend = $('screenSend'), screenError = $('screenError');
+    const setupName = $('setupName'), setupUsername = $('setupUsername'), createProfileBtn = $('createProfileBtn');
+    const displayName = $('displayName'), avatarInitial = $('avatarInitial'),
+          profileLink = $('profileLink'), copyLinkBtn = $('copyLinkBtn');
+    const tabInbox = $('tabInbox'), tabSent = $('tabSent');
+    const messageList = $('messageList');
+    const inboxCount = $('inboxCount'), sentCount = $('sentCount');
+    const sendAvatar = $('sendAvatar'), sendName = $('sendName'),
+          sendInput = $('sendInput'), sendToBtn = $('sendToBtn');
+    const errorText = $('errorText');
+    const toast = $('toast');
+
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+    function showScreen(s) {
+        [screenSetup, screenMain, screenSend, screenError].forEach(x => x.classList.add('hidden'));
+        s.classList.remove('hidden');
+    }
+
+    function createProfile() {
+        const name = setupName.value.trim();
+        const username = setupUsername.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+        if (!name) { showToast('Enter a display name'); return; }
+        if (username.length < 3) { showToast('Username needs 3+ chars'); return; }
+        if (db.users[username]) { showToast('Username taken'); return; }
+        db.users[username] = {
+            name, username,
+            inbox: [{ text: `Hey ${name}! Welcome to NGL. Share your link to get anonymous messages.`, time: 'just now', id: genId() }],
+            sent: [],
+            createdAt: Date.now()
+        };
+        db.currentUser = username;
+        saveDB();
+        showMain();
+        showToast('Profile created! 🎉');
+    }
+
+    function showMain() {
+        const user = getCurrent();
+        if (!user) { showScreen(screenSetup); setupName.focus(); return; }
+        showScreen(screenMain);
+        displayName.textContent = user.name;
+        avatarInitial.textContent = (user.name[0] || '?').toUpperCase();
+        const link = getLink(user.username);
+        profileLink.textContent = link.replace(/^https?:\/\//, '');
+        profileLink.href = link;
+        renderMessages();
+    }
+
+    function renderMessages() {
+        const user = getCurrent();
+        if (!user) return;
+        const inbox = user.inbox || [], sent = user.sent || [];
+        inboxCount.textContent = inbox.length;
+        sentCount.textContent = sent.length;
+        const messages = currentTab === 'inbox' ? inbox : sent;
+        messageList.innerHTML = '';
+        if (!messages.length) {
+            const empty = document.createElement('div');
+            empty.className = 'empty-state';
+            empty.innerHTML = currentTab === 'inbox'
+                ? '<div class="emoji">🕊️</div><p>No messages yet.<br>Share your link to receive anonymous messages!</p>'
+                : '<div class="emoji">📤</div><p>You haven\'t sent any messages yet.<br>Visit someone\'s link to send one!</p>';
+            messageList.appendChild(empty);
+        } else {
+            messages.forEach((m, i) => {
+                const el = document.createElement('div');
+                el.className = 'message-item' + (currentTab === 'sent' ? ' sent' : '');
+                el.style.animationDelay = Math.min(i * 0.03, 0.3) + 's';
+                const txt = document.createElement('div');
+                txt.className = 'message-text';
+                txt.textContent = m.text;
+                const meta = document.createElement('div');
+                meta.className = 'message-meta';
+                const badge = document.createElement('span');
+                badge.className = 'badge' + (currentTab === 'sent' ? ' sent-badge' : '');
+                badge.textContent = currentTab === 'inbox' ? 'anonymous' : 'sent' + (m.to ? ' → ' + m.to : '');
+                const time = document.createElement('span');
+                time.textContent = m.time || 'just now';
+                meta.appendChild(badge); meta.appendChild(time);
+                el.appendChild(txt); el.appendChild(meta);
+                messageList.appendChild(el);
+            });
+        }
+        messageList.scrollTop = 0;
+    }
+
+    function switchTab(tab) {
+        currentTab = tab;
+        tabInbox.classList.toggle('active', tab === 'inbox');
+        tabSent.classList.toggle('active', tab === 'sent');
+        renderMessages();
+    }
+
+    function copyLink() {
+        const user = getCurrent();
+        if (!user) return;
+        const link = getLink(user.username);
+        navigator.clipboard.writeText(link).then(
+            () => showToast('Link copied! Share it 🔗'),
+            () => {
+                const ta = document.createElement('textarea');
+                ta.value = link;
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand('copy'); showToast('Link copied! 🔗'); }
+                catch (e) { showToast('Could not copy'); }
+                document.body.removeChild(ta);
+            }
+        );
+    }
+
+    function sendToUser() {
+        const params = new URLSearchParams(window.location.search);
+        const to = params.get('to');
+        const text = sendInput.value.trim();
+        if (!text) { showToast('Type a message first'); return; }
+        const recipient = getUser(to);
+        if (!recipient) { showToast('User not found'); return; }
+        recipient.inbox.unshift({ text, time: 'just now', id: genId() });
+        if (recipient.inbox.length > 100) recipient.inbox.pop();
+        const current = getCurrent();
+        if (current) {
+            if (!current.sent) current.sent = [];
+            current.sent.unshift({ text, time: 'just now', id: genId(), to });
+            if (current.sent.length > 100) current.sent.pop();
+        }
+        saveDB();
+        sendInput.value = '';
+        sendInput.focus();
+        showToast('Sent anonymously! 🕊️');
+    }
+
+    function initRoute() {
+        const params = new URLSearchParams(window.location.search);
+        const to = params.get('to');
+        if (to) {
+            const user = getUser(to);
+            if (!user) {
+                errorText.textContent = `User "@${to}" not found.`;
+                showScreen(screenError);
+                return;
+            }
+            sendAvatar.textContent = (user.name[0] || '?').toUpperCase();
+            sendName.textContent = user.name;
+            showScreen(screenSend);
+            sendInput.focus();
+            return;
+        }
+        const user = getCurrent();
+        if (user) showMain();
+        else { showScreen(screenSetup); setupName.focus(); }
+    }
+
+    // Events
+    createProfileBtn.addEventListener('click', createProfile);
+    setupName.addEventListener('keypress', e => { if (e.key === 'Enter') setupUsername.focus(); });
+    setupUsername.addEventListener('keypress', e => { if (e.key === 'Enter') createProfile(); });
+    tabInbox.addEventListener('click', () => switchTab('inbox'));
+    tabSent.addEventListener('click', () => switchTab('sent'));
+    copyLinkBtn.addEventListener('click', copyLink);
+    sendToBtn.addEventListener('click', sendToUser);
+    sendInput.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); sendToUser(); } });
+
+    initRoute();
+})();
+</script>
+</body>
+</html>
